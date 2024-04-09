@@ -1,0 +1,16 @@
+{
+	"name": "MySql_all_table",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "labDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "MySqlTable",
+		"schema": [],
+		"typeProperties": {
+			"table": ""
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

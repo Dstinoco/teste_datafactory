@@ -1,0 +1,16 @@
+{
+	"name": "MySqlTableCliente",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "labDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "MySqlTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": "`cliente`"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
