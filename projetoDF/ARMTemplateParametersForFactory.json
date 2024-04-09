@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "projetoDF"
+		},
+		"AzureDataLakeStoragels_accountKey": {
+			"value": ""
+		},
+		"AzureDatabricks1_accessToken": {
+			"value": ""
+		},
+		"AzureSqlDatabase1_connectionString": {
+			"value": ""
+		},
+		"labDB_password": {
+			"value": ""
+		},
+		"AzureDataLakeStoragels_properties_typeProperties_url": {
+			"value": "https://datalakeprojeto99.dfs.core.windows.net/"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"value": "0323-141419-zaiskpy5"
+		},
+		"labDB_properties_typeProperties_server": {
+			"value": "database-1.cqnd6cyyb20z.us-east-2.rds.amazonaws.com"
+		},
+		"labDB_properties_typeProperties_database": {
+			"value": "lab"
+		},
+		"labDB_properties_typeProperties_username": {
+			"value": "admin"
+		}
+	}
+}

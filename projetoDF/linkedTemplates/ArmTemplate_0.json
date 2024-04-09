@@ -1,0 +1,1424 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nome do Data Factory",
+			"defaultValue": "projetoDF"
+		},
+		"AzureDataLakeStoragels_accountKey": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'accountKey' de 'AzureDataLakeStoragels'"
+		},
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'accessToken' de 'AzureDatabricks1'"
+		},
+		"AzureSqlDatabase1_connectionString": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'connectionString' de 'AzureSqlDatabase1'"
+		},
+		"labDB_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'labDB'"
+		},
+		"AzureDataLakeStoragels_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakeprojeto99.dfs.core.windows.net/"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0323-141419-zaiskpy5"
+		},
+		"labDB_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "database-1.cqnd6cyyb20z.us-east-2.rds.amazonaws.com"
+		},
+		"labDB_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "lab"
+		},
+		"labDB_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "admin"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStoragels')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStoragels_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStoragels_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricks1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-1287707726161764.4.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
+					"existingClusterId": "[parameters('AzureDatabricks1_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/labDB')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "MySql",
+				"typeProperties": {
+					"server": "[parameters('labDB_properties_typeProperties_server')]",
+					"port": 3306,
+					"database": "[parameters('labDB_properties_typeProperties_database')]",
+					"username": "[parameters('labDB_properties_typeProperties_username')]",
+					"sslMode": 1,
+					"useSystemTrustStore": 0,
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('labDB_password')]"
+					},
+					"driverVersion": "v2"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "clientes"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DL_Delimited_bronze')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CLI_ID",
+						"type": "String"
+					},
+					{
+						"name": "CLI_NOME",
+						"type": "String"
+					},
+					{
+						"name": "CLI_BAIRRO",
+						"type": "String"
+					},
+					{
+						"name": "CLI_LOGRADOURO",
+						"type": "String"
+					},
+					{
+						"name": "CLI_UF",
+						"type": "String"
+					},
+					{
+						"name": "CLI_CIDADE",
+						"type": "String"
+					},
+					{
+						"name": "CLI_CEP",
+						"type": "String"
+					},
+					{
+						"name": "CLI_TELEFONE",
+						"type": "String"
+					},
+					{
+						"name": "CLI_CPF",
+						"type": "String"
+					},
+					{
+						"name": "CLI_EMAIL",
+						"type": "String"
+					},
+					{
+						"name": "CLI_STATUS",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MySqlTableCliente')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "labDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "MySqlTable",
+				"schema": [],
+				"typeProperties": {
+					"tableName": "`cliente`"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/labDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MySql_all_table')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "labDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "MySqlTable",
+				"schema": [],
+				"typeProperties": {
+					"table": ""
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/labDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/api_cliente_csv_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "api_cliente_bronze.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "ID",
+						"type": "String"
+					},
+					{
+						"name": "NOME",
+						"type": "String"
+					},
+					{
+						"name": "BAIRRO",
+						"type": "String"
+					},
+					{
+						"name": "RUA",
+						"type": "String"
+					},
+					{
+						"name": "NUMERO",
+						"type": "String"
+					},
+					{
+						"name": "UF",
+						"type": "String"
+					},
+					{
+						"name": "CIDADE",
+						"type": "String"
+					},
+					{
+						"name": "CEP",
+						"type": "String"
+					},
+					{
+						"name": "TELEFONE",
+						"type": "String"
+					},
+					{
+						"name": "CPF",
+						"type": "String"
+					},
+					{
+						"name": "EMAIL",
+						"type": "String"
+					},
+					{
+						"name": "STATUS",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/cliente_parquet_sink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "silver"
+					},
+					"compressionCodec": "none"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/cliente_parquet_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "cliente.parquet",
+						"fileSystem": "inbound"
+					},
+					"compressionCodec": "none"
+				},
+				"schema": [
+					{
+						"name": "ID",
+						"type": "INT64"
+					},
+					{
+						"name": "NOME",
+						"type": "UTF8"
+					},
+					{
+						"name": "BAIRRO",
+						"type": "UTF8"
+					},
+					{
+						"name": "RUA",
+						"type": "UTF8"
+					},
+					{
+						"name": "UF",
+						"type": "UTF8"
+					},
+					{
+						"name": "CIDADE",
+						"type": "UTF8"
+					},
+					{
+						"name": "CEP",
+						"type": "UTF8"
+					},
+					{
+						"name": "TELEFONE",
+						"type": "UTF8"
+					},
+					{
+						"name": "CPF",
+						"type": "UTF8"
+					},
+					{
+						"name": "EMAIL",
+						"type": "UTF8"
+					},
+					{
+						"name": "STATUS",
+						"type": "UTF8"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/corretora_csv_2015')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_2015.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "case_enquiry_id",
+						"type": "String"
+					},
+					{
+						"name": "open_dt",
+						"type": "String"
+					},
+					{
+						"name": "sla_target_dt",
+						"type": "String"
+					},
+					{
+						"name": "closed_dt",
+						"type": "String"
+					},
+					{
+						"name": "on_time",
+						"type": "String"
+					},
+					{
+						"name": "case_status",
+						"type": "String"
+					},
+					{
+						"name": "closure_reason",
+						"type": "String"
+					},
+					{
+						"name": "case_title",
+						"type": "String"
+					},
+					{
+						"name": "subject",
+						"type": "String"
+					},
+					{
+						"name": "reason",
+						"type": "String"
+					},
+					{
+						"name": "type",
+						"type": "String"
+					},
+					{
+						"name": "queue",
+						"type": "String"
+					},
+					{
+						"name": "department",
+						"type": "String"
+					},
+					{
+						"name": "submitted_photo",
+						"type": "String"
+					},
+					{
+						"name": "closed_photo",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "fire_district",
+						"type": "String"
+					},
+					{
+						"name": "pwd_district",
+						"type": "String"
+					},
+					{
+						"name": "city_council_district",
+						"type": "String"
+					},
+					{
+						"name": "police_district",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood_services_district",
+						"type": "String"
+					},
+					{
+						"name": "ward",
+						"type": "String"
+					},
+					{
+						"name": "precinct",
+						"type": "String"
+					},
+					{
+						"name": "location_street_name",
+						"type": "String"
+					},
+					{
+						"name": "location_zipcode",
+						"type": "String"
+					},
+					{
+						"name": "latitude",
+						"type": "String"
+					},
+					{
+						"name": "longitude",
+						"type": "String"
+					},
+					{
+						"name": "geom_4326",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/corretora_csv_2016')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_2016.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "case_enquiry_id",
+						"type": "String"
+					},
+					{
+						"name": "open_dt",
+						"type": "String"
+					},
+					{
+						"name": "sla_target_dt",
+						"type": "String"
+					},
+					{
+						"name": "closed_dt",
+						"type": "String"
+					},
+					{
+						"name": "on_time",
+						"type": "String"
+					},
+					{
+						"name": "case_status",
+						"type": "String"
+					},
+					{
+						"name": "closure_reason",
+						"type": "String"
+					},
+					{
+						"name": "case_title",
+						"type": "String"
+					},
+					{
+						"name": "subject",
+						"type": "String"
+					},
+					{
+						"name": "reason",
+						"type": "String"
+					},
+					{
+						"name": "type",
+						"type": "String"
+					},
+					{
+						"name": "queue",
+						"type": "String"
+					},
+					{
+						"name": "department",
+						"type": "String"
+					},
+					{
+						"name": "submitted_photo",
+						"type": "String"
+					},
+					{
+						"name": "closed_photo",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "fire_district",
+						"type": "String"
+					},
+					{
+						"name": "pwd_district",
+						"type": "String"
+					},
+					{
+						"name": "city_council_district",
+						"type": "String"
+					},
+					{
+						"name": "police_district",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood_services_district",
+						"type": "String"
+					},
+					{
+						"name": "ward",
+						"type": "String"
+					},
+					{
+						"name": "precinct",
+						"type": "String"
+					},
+					{
+						"name": "location_street_name",
+						"type": "String"
+					},
+					{
+						"name": "location_zipcode",
+						"type": "String"
+					},
+					{
+						"name": "latitude",
+						"type": "String"
+					},
+					{
+						"name": "longitude",
+						"type": "String"
+					},
+					{
+						"name": "geom_4326",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/corretora_csv_2017')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_2017.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "case_enquiry_id",
+						"type": "String"
+					},
+					{
+						"name": "open_dt",
+						"type": "String"
+					},
+					{
+						"name": "sla_target_dt",
+						"type": "String"
+					},
+					{
+						"name": "closed_dt",
+						"type": "String"
+					},
+					{
+						"name": "on_time",
+						"type": "String"
+					},
+					{
+						"name": "case_status",
+						"type": "String"
+					},
+					{
+						"name": "closure_reason",
+						"type": "String"
+					},
+					{
+						"name": "case_title",
+						"type": "String"
+					},
+					{
+						"name": "subject",
+						"type": "String"
+					},
+					{
+						"name": "reason",
+						"type": "String"
+					},
+					{
+						"name": "type",
+						"type": "String"
+					},
+					{
+						"name": "queue",
+						"type": "String"
+					},
+					{
+						"name": "department",
+						"type": "String"
+					},
+					{
+						"name": "submitted_photo",
+						"type": "String"
+					},
+					{
+						"name": "closed_photo",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "fire_district",
+						"type": "String"
+					},
+					{
+						"name": "pwd_district",
+						"type": "String"
+					},
+					{
+						"name": "city_council_district",
+						"type": "String"
+					},
+					{
+						"name": "police_district",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood_services_district",
+						"type": "String"
+					},
+					{
+						"name": "ward",
+						"type": "String"
+					},
+					{
+						"name": "precinct",
+						"type": "String"
+					},
+					{
+						"name": "location_street_name",
+						"type": "String"
+					},
+					{
+						"name": "location_zipcode",
+						"type": "String"
+					},
+					{
+						"name": "latitude",
+						"type": "String"
+					},
+					{
+						"name": "longitude",
+						"type": "String"
+					},
+					{
+						"name": "geom_4326",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/corretora_csv_2018')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_2018.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "case_enquiry_id",
+						"type": "String"
+					},
+					{
+						"name": "open_dt",
+						"type": "String"
+					},
+					{
+						"name": "sla_target_dt",
+						"type": "String"
+					},
+					{
+						"name": "closed_dt",
+						"type": "String"
+					},
+					{
+						"name": "on_time",
+						"type": "String"
+					},
+					{
+						"name": "case_status",
+						"type": "String"
+					},
+					{
+						"name": "closure_reason",
+						"type": "String"
+					},
+					{
+						"name": "case_title",
+						"type": "String"
+					},
+					{
+						"name": "subject",
+						"type": "String"
+					},
+					{
+						"name": "reason",
+						"type": "String"
+					},
+					{
+						"name": "type",
+						"type": "String"
+					},
+					{
+						"name": "queue",
+						"type": "String"
+					},
+					{
+						"name": "department",
+						"type": "String"
+					},
+					{
+						"name": "submitted_photo",
+						"type": "String"
+					},
+					{
+						"name": "closed_photo",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "fire_district",
+						"type": "String"
+					},
+					{
+						"name": "pwd_district",
+						"type": "String"
+					},
+					{
+						"name": "city_council_district",
+						"type": "String"
+					},
+					{
+						"name": "police_district",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood_services_district",
+						"type": "String"
+					},
+					{
+						"name": "ward",
+						"type": "String"
+					},
+					{
+						"name": "precinct",
+						"type": "String"
+					},
+					{
+						"name": "location_street_name",
+						"type": "String"
+					},
+					{
+						"name": "location_zipcode",
+						"type": "String"
+					},
+					{
+						"name": "latitude",
+						"type": "String"
+					},
+					{
+						"name": "longitude",
+						"type": "String"
+					},
+					{
+						"name": "geom_4326",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/corretora_csv_2019')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_2019.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "case_enquiry_id",
+						"type": "String"
+					},
+					{
+						"name": "open_dt",
+						"type": "String"
+					},
+					{
+						"name": "sla_target_dt",
+						"type": "String"
+					},
+					{
+						"name": "closed_dt",
+						"type": "String"
+					},
+					{
+						"name": "on_time",
+						"type": "String"
+					},
+					{
+						"name": "case_status",
+						"type": "String"
+					},
+					{
+						"name": "closure_reason",
+						"type": "String"
+					},
+					{
+						"name": "case_title",
+						"type": "String"
+					},
+					{
+						"name": "subject",
+						"type": "String"
+					},
+					{
+						"name": "reason",
+						"type": "String"
+					},
+					{
+						"name": "type",
+						"type": "String"
+					},
+					{
+						"name": "queue",
+						"type": "String"
+					},
+					{
+						"name": "department",
+						"type": "String"
+					},
+					{
+						"name": "submitted_photo",
+						"type": "String"
+					},
+					{
+						"name": "closed_photo",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "fire_district",
+						"type": "String"
+					},
+					{
+						"name": "pwd_district",
+						"type": "String"
+					},
+					{
+						"name": "city_council_district",
+						"type": "String"
+					},
+					{
+						"name": "police_district",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood_services_district",
+						"type": "String"
+					},
+					{
+						"name": "ward",
+						"type": "String"
+					},
+					{
+						"name": "precinct",
+						"type": "String"
+					},
+					{
+						"name": "location_street_name",
+						"type": "String"
+					},
+					{
+						"name": "location_zipcode",
+						"type": "String"
+					},
+					{
+						"name": "latitude",
+						"type": "String"
+					},
+					{
+						"name": "longitude",
+						"type": "String"
+					},
+					{
+						"name": "geom_4326",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/corretora_csv_2020')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_2020.csv",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "case_enquiry_id",
+						"type": "String"
+					},
+					{
+						"name": "open_dt",
+						"type": "String"
+					},
+					{
+						"name": "sla_target_dt",
+						"type": "String"
+					},
+					{
+						"name": "closed_dt",
+						"type": "String"
+					},
+					{
+						"name": "on_time",
+						"type": "String"
+					},
+					{
+						"name": "case_status",
+						"type": "String"
+					},
+					{
+						"name": "closure_reason",
+						"type": "String"
+					},
+					{
+						"name": "case_title",
+						"type": "String"
+					},
+					{
+						"name": "subject",
+						"type": "String"
+					},
+					{
+						"name": "reason",
+						"type": "String"
+					},
+					{
+						"name": "type",
+						"type": "String"
+					},
+					{
+						"name": "queue",
+						"type": "String"
+					},
+					{
+						"name": "department",
+						"type": "String"
+					},
+					{
+						"name": "submitted_photo",
+						"type": "String"
+					},
+					{
+						"name": "closed_photo",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "fire_district",
+						"type": "String"
+					},
+					{
+						"name": "pwd_district",
+						"type": "String"
+					},
+					{
+						"name": "city_council_district",
+						"type": "String"
+					},
+					{
+						"name": "police_district",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood",
+						"type": "String"
+					},
+					{
+						"name": "neighborhood_services_district",
+						"type": "String"
+					},
+					{
+						"name": "ward",
+						"type": "String"
+					},
+					{
+						"name": "precinct",
+						"type": "String"
+					},
+					{
+						"name": "location_street_name",
+						"type": "String"
+					},
+					{
+						"name": "location_zipcode",
+						"type": "String"
+					},
+					{
+						"name": "latitude",
+						"type": "String"
+					},
+					{
+						"name": "longitude",
+						"type": "String"
+					},
+					{
+						"name": "geom_4326",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_boston_sink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_boston_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStoragels",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dados_baston.zip",
+						"fileSystem": "inbound"
+					},
+					"columnDelimiter": ",",
+					"compressionCodec": "ZipDeflate",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "PK\u0005\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStoragels')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_corretora')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "corretora"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "corretora"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		}
+	]
+}
